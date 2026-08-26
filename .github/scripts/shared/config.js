@@ -68,7 +68,7 @@ const CONFIG = {
   // Home repo must be first — contributor history is resolved against it.
   repos: [
     {
-      owner: 'hiero-ledger',
+      owner: 'ParasSalonia',
       repo:  'hiero-sdk-python',
       isHome: true,
       repositoryUrl: 'https://github.com/hiero-ledger/hiero-sdk-python',
@@ -84,7 +84,7 @@ const CONFIG = {
       },
     },
     {
-      owner: 'hiero-ledger',
+      owner: 'ParasSalonia',
       repo:  'hiero-sdk-cpp',
       labels: {
         gfi:          'skill: good first issue',

@@ -13,7 +13,7 @@ jest.mock('../../shared/api/github-api', () => ({
   assignIssue: jest.fn(),
 }));
 
-jest.mock('../../coderabbit_plan_trigger.js', () => ({
+jest.mock('../../shared/helpers/coderabbit-plan.js', () => ({
   triggerCodeRabbitPlan: jest.fn(),
   hasExistingCodeRabbitPlan: jest.fn(),
 }));
@@ -43,7 +43,7 @@ const spam = require('../../shared/helpers/spam');
 const {
   triggerCodeRabbitPlan,
   hasExistingCodeRabbitPlan,
-} = require('../../coderabbit_plan_trigger.js');
+} = require('../../shared/helpers/coderabbit-plan.js');
 
 function createContext(overrides = {}) {
   return {

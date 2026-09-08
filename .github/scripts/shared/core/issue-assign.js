@@ -55,7 +55,7 @@ const {
 const {
   triggerCodeRabbitPlan,
   hasExistingCodeRabbitPlan,
-} = require('../../coderabbit_plan_trigger.js');
+} = require('../helpers/coderabbit-plan.js');
 
 /**
  * Returns true if a comment contains the `/assign` command.

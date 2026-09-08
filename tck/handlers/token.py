@@ -19,6 +19,7 @@ from hiero_sdk_python.tokens.supply_type import SupplyType
 from hiero_sdk_python.tokens.token_airdrop_claim import TokenClaimAirdropTransaction
 from hiero_sdk_python.tokens.token_airdrop_pending_id import PendingAirdropId
 from hiero_sdk_python.tokens.token_airdrop_transaction import TokenAirdropTransaction
+from hiero_sdk_python.tokens.token_airdrop_transaction_cancel import TokenCancelAirdropTransaction
 from hiero_sdk_python.tokens.token_associate_transaction import TokenAssociateTransaction
 from hiero_sdk_python.tokens.token_burn_transaction import TokenBurnTransaction
 from hiero_sdk_python.tokens.token_create_transaction import TokenCreateTransaction
@@ -38,6 +39,7 @@ from hiero_sdk_python.tokens.token_reject_transaction import TokenRejectTransact
 from hiero_sdk_python.tokens.token_revoke_kyc_transaction import TokenRevokeKycTransaction
 from hiero_sdk_python.tokens.token_type import TokenType
 from hiero_sdk_python.tokens.token_unfreeze_transaction import TokenUnfreezeTransaction
+from hiero_sdk_python.tokens.token_unpause_transaction import TokenUnpauseTransaction
 from hiero_sdk_python.tokens.token_update_transaction import TokenUpdateTransaction
 from hiero_sdk_python.tokens.token_wipe_transaction import TokenWipeTransaction
 from hiero_sdk_python.transaction.transaction_receipt import TransactionReceipt
@@ -47,6 +49,7 @@ from tck.param.token import (
     AirdropTokenParams,
     AssociateTokenParams,
     BurnTokenParams,
+    CancelAirdropParams,
     ClaimTokenParams,
     CreateTokenParams,
     DeleteTokenParams,
@@ -60,6 +63,7 @@ from tck.param.token import (
     RejectTokenParams,
     RevokeTokenKycParams,
     UnfreezeTokenParams,
+    UnpauseTokenParams,
     UpdateTokenParams,
     WipeTokenParams,
 )
@@ -67,6 +71,7 @@ from tck.response.token import (
     AirdropTokenResponse,
     AssociateTokenResponse,
     BurnTokenResponse,
+    CancelAirdropResponse,
     ClaimTokenResponse,
     CreateTokenResponse,
     CustomFeeResponse,
@@ -81,6 +86,7 @@ from tck.response.token import (
     RejectTokenResponse,
     RevokeTokenKycResponse,
     UnfreezeTokenResponse,
+    UnpauseTokenResponse,
     UpdateTokenResponse,
     WipeTokenResponse,
 )
@@ -257,6 +263,54 @@ def create_token(params: CreateTokenParams) -> CreateTokenResponse:
     )
 
 
+def _build_cancel_airdrop_transaction(params: CancelAirdropParams) -> TokenCancelAirdropTransaction:
+    """Build a TokenCancelAirdropTransaction from TCK params."""
+    transaction = TokenCancelAirdropTransaction().set_grpc_deadline(DEFAULT_GRPC_TIMEOUT)
+
+    if params.pendingAirdrops:
+        for pending_airdrop in params.pendingAirdrops:
+            sender_id = AccountId.from_string(pending_airdrop.senderAccountId)
+            receiver_id = AccountId.from_string(pending_airdrop.receiverAccountId)
+            token_id = TokenId.from_string(pending_airdrop.tokenId)
+
+            if pending_airdrop.serialNumbers:
+                for serial_number in pending_airdrop.serialNumbers:
+                    nft_id = NftId(token_id, int(serial_number))
+                    transaction.add_pending_airdrop(
+                        PendingAirdropId(
+                            sender_id,
+                            receiver_id,
+                            nft_id=nft_id,
+                        )
+                    )
+            else:
+                transaction.add_pending_airdrop(
+                    PendingAirdropId(
+                        sender_id,
+                        receiver_id,
+                        token_id=token_id,
+                    )
+                )
+
+    return transaction
+
+
+@rpc_method("cancelAirdrop")
+def cancel_airdrop(params: CancelAirdropParams) -> CancelAirdropResponse:
+    """Cancel a token airdrop using TCK cancelAirdrop parameters."""
+    client = get_client(params.sessionId)
+
+    transaction = _build_cancel_airdrop_transaction(params)
+
+    if params.commonTransactionParams is not None:
+        params.commonTransactionParams.apply_common_params(transaction, client)
+
+    response = transaction.execute(client, wait_for_receipt=False)
+    receipt: TransactionReceipt = response.get_receipt(client, validate_status=True)
+
+    return CancelAirdropResponse(status=ResponseCode(receipt.status).name)
+
+
 def _build_mint_token_transaction(params: MintTokenParams) -> TokenMintTransaction:
     """Build a TokenMintTransaction from TCK params."""
     transaction = TokenMintTransaction().set_grpc_deadline(DEFAULT_GRPC_TIMEOUT)
@@ -349,6 +403,16 @@ def _build_freeze_token_transaction(params: FreezeTokenParams) -> TokenFreezeTra
 def _build_pause_token_transaction(params: PauseTokenParams) -> TokenPauseTransaction:
     """Build a TokenPauseTransaction from TCK params."""
     transaction = TokenPauseTransaction().set_grpc_deadline(DEFAULT_GRPC_TIMEOUT)
+
+    if params.tokenId is not None:
+        transaction.set_token_id(TokenId.from_string(params.tokenId))
+
+    return transaction
+
+
+def _build_unpause_token_transaction(params: UnpauseTokenParams) -> TokenUnpauseTransaction:
+    """Build a TokenUnpauseTransaction from TCK params."""
+    transaction = TokenUnpauseTransaction().set_grpc_deadline(DEFAULT_GRPC_TIMEOUT)
 
     if params.tokenId is not None:
         transaction.set_token_id(TokenId.from_string(params.tokenId))
@@ -487,6 +551,22 @@ def pause_token(params: PauseTokenParams) -> PauseTokenResponse:
     receipt: TransactionReceipt = response.get_receipt(client, validate_status=True)
 
     return PauseTokenResponse(status=ResponseCode(receipt.status).name)
+
+
+@rpc_method("unpauseToken")
+def unpause_token(params: UnpauseTokenParams) -> UnpauseTokenResponse:
+    """Unpause a token using TCK unpauseToken parameters."""
+    client = get_client(params.sessionId)
+
+    transaction = _build_unpause_token_transaction(params)
+
+    if params.commonTransactionParams is not None:
+        params.commonTransactionParams.apply_common_params(transaction, client)
+
+    response = transaction.execute(client, wait_for_receipt=False)
+    receipt: TransactionReceipt = response.get_receipt(client, validate_status=True)
+
+    return UnpauseTokenResponse(status=ResponseCode(receipt.status).name)
 
 
 @rpc_method("grantTokenKyc")

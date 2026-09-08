@@ -64,4 +64,4 @@ jobs:
         with:
           script: |
             const {triggerCodeRabbitPlanForIssue,} = require('./.github/scripts/shared/helpers/coderabbit-plan.js');
-            await script({ github, context });
+            await triggerCodeRabbitPlanForIssue({ github, context });

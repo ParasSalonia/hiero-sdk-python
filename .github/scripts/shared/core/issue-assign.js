@@ -301,16 +301,20 @@ async function runAssignmentFlow({ github, context }) {
       issueNumber
     );
 
-    if (!planExists) {
+    if (planExists === false) {
       await triggerCodeRabbitPlan(
-        github,
-        owner,
-        repoName,
-        issue
+      github,
+      owner,
+      repoName,
+      issue
+    );
+    } else if (planExists === true) {
+        console.log(
+        `[assign-bot] CodeRabbit plan already exists for #${issueNumber}`
       );
     } else {
       console.log(
-        `[assign-bot] CodeRabbit plan already exists for #${issueNumber}`
+      `[assign-bot] Unable to determine whether a CodeRabbit plan exists for #${issueNumber}. Skipping trigger.`
       );
     }
   } catch (error) {

@@ -73,7 +73,7 @@ async function hasExistingCodeRabbitPlan(github, owner, repo, issueNumber) {
       issueNumber,
     });
     // Return false to allow plan trigger attempt (fail-open for better UX)
-    return false;
+    return null;
   }
 }
 
@@ -113,7 +113,15 @@ function logSummary(owner, repo, issue) {
 async function triggerCodeRabbitPlanForIssue({ github, context }) {
   try {
     const { owner, repo } = context.repo;
-    const { issue: eventIssue, label } = context.payload;
+
+    const payload = context?.payload;
+
+    if (!payload) {
+      console.log('No event payload');
+      return;
+    }
+
+    const { issue: eventIssue, label } = payload;
 
     // Validations
     if (!eventIssue?.number) return console.log('No issue in payload');
